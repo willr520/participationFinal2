@@ -1,17 +1,29 @@
+
+//right now using saved.js 
+
 let originalImage;
 let recognition;
 let finalTranscript = '';
+let interimTranscript = ''; 
 let currentGeneratedImage = null;
 let scene = 1;
 let button;
+let Karrik;
+let VG5000;
+let showTimer = false;
+let generatedImageCount = 0;
+
+//add music (with preLoad??)
 
 function preload() {
+  Karrik = loadFont('Karrik.ttf');
+  VG5000 = loadFont('VG5000.ttf');
   originalImage = loadImage('images/originalImage.jpeg');
 }
 
 function setup() {
   createCanvas(1920, 1080);
-  textFont('Helvetica');
+  textFont(VG5000);
   const click_to_record = select('#click_to_record');
   const stop_recording = select('#stop_recording');
 
@@ -23,16 +35,16 @@ function setup() {
   }
 
   click_to_record.mousePressed(startRecording);
-  stop_recording.mousePressed(stopAndResetRecording);
+  //stop_recording.mousePressed(stopAndResetRecording);
 
   // Create the button in scene 1
   button = createButton('Click me');
-  button.position(width / 2, 200);
+  button.position(width / 2, height / 2 + 100);
   button.mousePressed(switchToScene2); // Call switchToScene2 function when the button is pressed
 }
 
 function draw() {
-  background(255); // Clear the background
+  background(240); // Clear the background
 
   if (scene === 1) {
     drawScene1();
@@ -40,33 +52,103 @@ function draw() {
     drawScene2();
   } else if (scene === 3) {
     drawScene3();
+  } else if (scene === 4) {
+    drawScene4();
+  }
+
+
+  if (showTimer) {
+    drawTimer();
   }
 }
 
+function drawTimer() {
+  let currentTime = int((millis() - recordingStartTime) / 1000);
+  let remainingTime = max(30 - currentTime, 0); // Calculate remaining time
+  textSize(30);
+  fill(0);
+  text("TIME: " + remainingTime, width / 2 + 800, 300);
+}
+
 function drawScene1() {
-  textSize(35);
+  textSize(60);
   textAlign(CENTER);
-  text("Press the button to start", width / 2, 100);
+  text("Press the button to start", width / 2, height / 2);
   select('#click_to_record').hide();
   select('#stop_recording').hide();
   select('#convert_text').hide();
 }
 
 function drawScene2() {
-  image(originalImage, 400, 200);
+  let scaleFactor = 1.4;
+  let scaledWidth = originalImage.width * scaleFactor;
+  let scaledHeight = originalImage.height * scaleFactor;
+  let x = 40;
+  let y = height / 2 - scaledHeight / 2 + 80;
+  imageMode(CORNER);
+  image(originalImage, x, y, scaledWidth, scaledHeight);
   fill(0);
-  textSize(35);
+  textSize(40);
   textAlign(CENTER);
   text("Describe this image with as much detail as possible", width / 2, 100);
   select('#click_to_record').show();
   select('#stop_recording').show();
   select('#convert_text').show();
+
+  // Display the generated text on the canvas
+  textAlign(LEFT);
+  textWrap(WORD);
+  textSize(30);
+  text(finalTranscript + interimTranscript, width / 2, 200, 800);
+  console.log('scene2')
 }
 
 function drawScene3() {
   if (currentGeneratedImage) {
-    image(currentGeneratedImage, 0, 0); // Display the generated image
+    background(0, 255, 0);
+    imageMode(CENTER);
+    let scaleFactor = 0.5;
+    let scaledWidth = currentGeneratedImage.width * scaleFactor;
+    let scaledHeight = currentGeneratedImage.height * scaleFactor;
+    let x = 40;
+    let y = height / 2 - scaledHeight / 2 + 40;
+    imageMode(CORNER);
+    image(currentGeneratedImage, x, y, scaledWidth, scaledHeight);
+    textSize(40);
+    textAlign(CENTER);
   }
+  textWrap(WORD);
+  text(finalTranscript, width / 2, 200, 800);
+  setTimeout(switchToScene4, 5000);
+  console.log('scene3')
+}
+
+function drawScene4() {
+  imageMode(CORNER);
+  let scaleFactor = 0.5;
+  let scaledWidth = currentGeneratedImage.width * scaleFactor;
+  let scaledHeight = currentGeneratedImage.height * scaleFactor;
+  let x = 40;
+  let y = height / 2 - scaledHeight / 2 + 40;
+  image(currentGeneratedImage, x, y, scaledWidth, scaledHeight);
+  fill(0);
+  textSize(40);
+  textAlign(CENTER);
+  text("Describe this image with as much detail as possible", width / 2, 100);
+  textAlign(LEFT);
+  textWrap(WORD);
+  textSize(30);
+  text(finalTranscript + interimTranscript, width / 2, 200, 800);
+  console.log('scene4');
+  //give instructions on what button to press, timer in the upper right corner that is static at 30 seconds but starts counting down when button pressed
+}
+
+//draw scene 5
+
+//scene 4 - have to call the generated image again ?? then reset the transcript (basically repeat scene 2 and 3)
+function resetTranscription() {
+  finalTranscript = '';
+  interimTranscript = '';
 }
 
 function switchToScene2() {
@@ -74,21 +156,32 @@ function switchToScene2() {
   button.remove(); // Remove the button from scene 1
 }
 
-function startRecording() {
-  recognition.start();
-  console.log("Speech recognition started!");
+function switchToScene4() {
+  scene = 4;
+  resetTranscription();
+}
 
+
+function startRecording() {
+  resetTranscription();
+  recognition.start();
+  recordingStartTime = millis();
+  console.log("Speech recognition started!");
+  console.log(interimTranscript + finalTranscript);
+  showTimer = true;
   setTimeout(() => {
     console.log("30 seconds passed, stopping and resetting recording.");
     stopAndResetRecording();
   }, 30000); // Stop and reset after 30 seconds
 }
 
+
 function stopAndResetRecording() {
   recognition.stop();
+  console.log(finalTranscript + interimTranscript);
   console.log("Speech recognition stopped by user.");
   console.log("Final transcript for this session:", finalTranscript);
-  resetTranscription(); // Reset the transcript after stopping
+  showTimer = false;
 }
 
 function setupSpeechRecognition() {
@@ -96,27 +189,31 @@ function setupSpeechRecognition() {
   recognition.interimResults = true;
   recognition.continuous = true;
 
+  recognition.onstart = () => {
+    setTimeout(() => {
+      console.log("30 seconds passed, stopping and resetting recording.");
+      stopAndResetRecording();
+    }, 30000); // Stop and reset after 30 seconds
+  };
+
   recognition.onresult = (event) => {
-    let interimTranscript = '';
+
+    interimTranscript = ''; // Reset interim transcript
     for (let i = event.resultIndex; i < event.results.length; ++i) {
       if (event.results[i].isFinal) {
-        finalTranscript += event.results[i][0].transcript; // Append only finalized text to final transcript
+        finalTranscript += event.results[i][0].transcript + ' '; // Append only finalized text to final transcript
       } else {
-        interimTranscript += event.results[i][0].transcript;
+        interimTranscript += event.results[i][0].transcript + ' '; // Append interim text
       }
     }
-    select('#convert_text').value(finalTranscript + interimTranscript);
-  };
 
+  };
+  setTimeout(() => {
   recognition.onend = () => {
     console.log("Recognition ended");
-    getImage(finalTranscript);
   };
-}
-
-function resetTranscription() {
-  finalTranscript = ''; // Clear the final transcript
-  select('#convert_text').value(''); // Clear the input/display field
+  getImage(finalTranscript);
+}, 30000)
 }
 
 async function getImage(transcript) {
@@ -143,7 +240,6 @@ async function getImage(transcript) {
       // Load the generated image
       loadImage(URL.createObjectURL(response.data), img => {
         currentGeneratedImage = img;
-        // Switch to the third scene
         scene = 3;
       });
     } else {
