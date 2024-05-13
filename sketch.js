@@ -24,8 +24,8 @@ function preload() {
 function setup() {
   createCanvas(1920, 1080);
   textFont(VG5000);
-  const click_to_record = select('#click_to_record');
-  const stop_recording = select('#stop_recording');
+  //const click_to_record = select('#click_to_record');
+  //const stop_recording = select('#stop_recording');
 
   window.SpeechRecognition = window.SpeechRecognition || window.webkitSpeechRecognition;
   if (window.SpeechRecognition) {
@@ -34,13 +34,13 @@ function setup() {
     console.error('Speech Recognition not supported in this browser.');
   }
 
-  click_to_record.mousePressed(startRecording);
+  //click_to_record.mousePressed(startRecording);
   //stop_recording.mousePressed(stopAndResetRecording);
 
   // Create the button in scene 1
-  button = createButton('Click me');
-  button.position(width / 2, height / 2 + 100);
-  button.mousePressed(switchToScene2); // Call switchToScene2 function when the button is pressed
+  //button = createButton('Click me');
+  //button.position(width / 2, height / 2 + 100);
+  //button.mousePressed(switchToScene2); // Call switchToScene2 function when the button is pressed
 }
 
 function draw() {

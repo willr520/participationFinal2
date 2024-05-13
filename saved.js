@@ -16,29 +16,41 @@ let numGeneratedImages = 0;
 let generatedImages = [];
 let serial;
 let startButtonPressed = 0;
+let startButtonSwitchToSceneTwo = 0;
+let stopButtonPressed = 0;
+let whiteButtonStartRecording = false; 
+let recordingStarted = false; // Flag variable to track if recording has started
+let sceneSwitchedTo2 = false;
+let redButtonPressCount = 0;
+const imageSize = 800;
+
 
 //add music (with preLoad??) (brown noise)
 //add instructions
 
 // if button pressed = 2 and 30 seconds have gone up
 
+//text lower, scene 5 timer
+
 function preload() {
-  Karrik = loadFont('Karrik.ttf');
-  VG5000 = loadFont('VG5000.ttf');
-  DINMittelschriftStd = loadFont('DINMittelschriftStd.otf');
-  DINEngschriftStd = loadFont('DINEngschriftStd.otf');
+  Karrik = loadFont('fonts/Karrik.ttf');
+  VG5000 = loadFont('fonts/VG5000.ttf');
+  DINMittelschriftStd = loadFont('fonts/DINMittelschriftStd.otf');
+  DINEngschriftStd = loadFont('fonts/DINEngschriftStd.otf');
 }
 
 function preload() {
-  originalImage = loadImage('images/originalImage.jpeg'); //randomly take an image from the images folder of the colors that we collected
-
+  totalImages = 22;
+  randomImageIndex = Math.floor(random(1, totalImages + 1));
+  imagePath = `images/originalImage${randomImageIndex}.jpg`;
+  originalImage = loadImage(imagePath);
 }
 
 function setup() {
 
   serial = new p5.SerialPort();
   serial.list();
-  serial.open("/dev/tty.usbmodem1413301");
+  serial.open("/dev/tty.usbmodem141301");
   serial.on('connected', serverConnected);
   serial.on('list', gotList);
   serial.on('data', gotData);
@@ -63,14 +75,15 @@ function setup() {
   stop_recording.mousePressed(stopAndResetRecording);
 
   // Create the button in scene 1
-  button = createButton('Click me');
-  button.position(width / 2, height / 2 + 100);
-  button.mousePressed(switchToScene2); 
+  //button = createButton('Click me');
+  //button.position(width / 2, height / 2 + 100);
+  //button.mousePressed(switchToScene2); 
 
 }
 
 function draw() {
   background(240); 
+
 
   if (scene === 1) {
     drawScene1();
@@ -92,13 +105,29 @@ function draw() {
     drawStartTimer();
   } 
   
-  if (startButtonPressed === 1) {
+  if (startButtonPressed === 1 && !sceneSwitchedTo2) {
+    console.log("startbuttonPressed is 1")
+    console.log("whileButtonStartRecording",whiteButtonStartRecording);
     switchToScene2();
-  } if (startButtonPressed === 2 && !recognition.running) {
-     // Check if button press count is 2 and recognition is not running
-    startRecording();
+    sceneSwitchedTo2 = true;
   }
 
+
+   if (startButtonPressed === 2  && !recordingStarted) {
+
+    console.log("recordingStarted", recordingStarted);
+    whiteButtonStartRecording = true;
+  }
+
+  if (whiteButtonStartRecording){
+    console.log("startButtonPressed is two and starting recording")
+    // Check if button press count is 2 and recognition is not running
+    startRecording();
+    whiteButtonStartRecording = false;
+    recordingStarted = true;
+    console.log("recordingStarted", recordingStarted);
+    startButtonPressed = 2;
+  }
 }
 
 
@@ -134,12 +163,25 @@ function gotData() {
   trim(currentString);                    // remove any trailing whitespace
   if (!currentString) return;             // if the string is empty, do no more
   console.log(currentString);             // print the string
-  latestData = currentString;            // save it for the draw method
+  latestData = currentString;             // save it for the draw method
 
   if (latestData === "Start Button Pressed") {
     startButtonPressed++; // Increment the variable
     console.log("Start Button Pressed! Count:", startButtonPressed);
   }
+  if (latestData === "Stop Button Pressed") {
+    redButtonPressCount++; // Increment the variable
+    stopButtonPressed++;
+    console.log("Stop Button Pressed! Count:", stopButtonPressed);
+  }
+
+  if(stopButtonPressed === 1) {
+    stopAndResetRecording();
+    redButtonPressCount = 0;
+    stopButtonPressed = 0;
+    console.log("redButtonPressCount:", redButtonPressCount);
+  }
+  
 }
 
 function gotRawData(thedata) {
@@ -151,18 +193,18 @@ function drawTimer() {
   let remainingTime = max(30 - currentTime, 0); 
   textSize(30);
   fill(0);
-  text("TIME: " + remainingTime, width / 2 + 800, 300);
+  textAlign(LEFT);
+  textWrap(WORD);
+  text("TIME: " + remainingTime, width / 2 + 800, 300, 200);
   startTimer = false;
 }
 
 function drawStartTimer() {
   textSize(30);
   fill(0);
-  text("TIME: 30", width / 2 + 800, 300);
+  text("TIME: 30", width / 2 + 800, 300, 200);
 }
 
-
-startButton();
 
 function drawScene1() {
   fill(0);
@@ -180,13 +222,17 @@ function drawScene1() {
 
 function drawScene2() {
   startTimer = true;
-  let scaleFactor = 0.7;
+  //let scaleFactor = 0.7;
+  //let scaledWidth = originalImage.width * scaleFactor;
+  //let scaledHeight = originalImage.height * scaleFactor;
+  //let x = 40;
+  //let y = height / 2 - scaledHeight / 2 + 80;
+  imageMode(CORNER);
+  //image(originalImage, x, y, scaledWidth, scaledHeight);
+  let scaleFactor = min(imageSize / originalImage.width, imageSize / originalImage.height);
   let scaledWidth = originalImage.width * scaleFactor;
   let scaledHeight = originalImage.height * scaleFactor;
-  let x = 40;
-  let y = height / 2 - scaledHeight / 2 + 80;
-  imageMode(CORNER);
-  image(originalImage, x, y, scaledWidth, scaledHeight);
+  image(originalImage, 40, (height - scaledHeight) / 2, scaledWidth, scaledHeight);
   fill(0);
   textSize(60);
   textAlign(CENTER);
@@ -218,20 +264,22 @@ function drawScene2() {
 
 function drawScene3() {
   startTimer = false;
-  background(0, 255, 0);
+  background(69, 69, 69);
   if (currentGeneratedImage) {
     imageMode(CENTER);
     let scaleFactor = 0.5;
     let scaledWidth = currentGeneratedImage.width * scaleFactor;
     let scaledHeight = currentGeneratedImage.height * scaleFactor;
     let x = 40;
-    let y = height / 2 - scaledHeight / 2 + 40;
+    let y = height / 2 - scaledHeight / 2 + 80;
     imageMode(CORNER);
     image(currentGeneratedImage, x, y, scaledWidth, scaledHeight);
     textSize(40);
     textAlign(CENTER);
   }
   textWrap(WORD);
+  fill(255);
+  rectMode(CORNER);
   text(finalTranscript, width/2, 200, 800);
   setTimeout(switchToScene4, 5000);
   console.log('scene3')
@@ -244,7 +292,7 @@ function drawScene4() {
     let scaledWidth = currentGeneratedImage.width * scaleFactor;
     let scaledHeight = currentGeneratedImage.height * scaleFactor;
     let x = 40;
-    let y = height / 2 - scaledHeight / 2 + 40;
+    let y = height / 2 - scaledHeight / 2 + 80;
     image(currentGeneratedImage, x, y, scaledWidth, scaledHeight);
     fill(0);
     textSize(60);
@@ -255,30 +303,46 @@ function drawScene4() {
     fill(75);
     textSize(40);
     text("Press the white button when you are ready to speak your response into the microphone ⚪", width/12, 110,  5 * width / 6, width/2);
-    text("Press the red button to stop recording 🔴", width/12, 150,  5 * width / 6, width/2);
+    text("Press the red button to stop recording 🔴", width/12, 160,  5 * width / 6, width/2);
     textAlign(LEFT);
     textWrap(WORD);
     textSize(30);
     text(finalTranscript + interimTranscript, width/2, 300, 800);
-    console.log('scene4');
+    console.log('scene4', redButtonPressCount);
     if (numGeneratedImages == 4) {
     switchToScene5();
     }
+ 
 }
 
 function drawScene5() {
   // Display all four generated images
-  let xOffset = 40;
+  startTimer = false;
+  showTimer = false;
+  let xOffset = width/4 + 380;
+  textSize(30);
+  rectMode(CENTER);
+  textAlign(CENTER);
+  text("Original Image", 450, height/4, 300);
   let yOffset = 40;
   let imageWidth = 500;
   let imageHeight = 500;
+  //let scaleFactor = 0.6;
+  //let scaledWidth = originalImage.width * scaleFactor;
+  //let scaledHeight = originalImage.height * scaleFactor;
+  imageMode(CORNER);
+  let scaleFactor = min(imageSize / originalImage.width, imageSize / originalImage.height);
+  let scaledWidth = originalImage.width * scaleFactor;
+  let scaledHeight = originalImage.height * scaleFactor;
+  image(originalImage, 40, (height - scaledHeight) / 2 + 30, scaledWidth, scaledHeight);
   //these are the four images that are generated (include the original image)
   for (let i = 0; i < generatedImages.length; i++) {
+    imageMode(CORNER);
     image(generatedImages[i], xOffset, yOffset, imageWidth, imageHeight);
-    xOffset += imageWidth + 20;
+    xOffset += imageWidth + 10;
     if ((i + 1) % 2 === 0) {
-      xOffset = 40;
-      yOffset += imageHeight + 20;
+      xOffset = width/4 + 380;
+      yOffset += imageHeight + 10;
     }
   }
   setTimeout(() => {
@@ -295,7 +359,6 @@ function drawScene5() {
 
 function switchToScene2() {
   scene = 2; 
-  button.remove(); 
 }
 
 function switchToScene4() {
@@ -319,12 +382,18 @@ function startRecording() {
     setTimeout(() => {
       console.log("30 seconds passed, stopping and resetting recording.");
       stopAndResetRecording();
+      startButtonPressed = 0;
+      redButtonPressCount = 0;
+      stopButtonPressed = 0;
     }, 30000); 
   }
 }
 
 
 function stopAndResetRecording() {
+  recordingStarted = false;
+  console.log("recordingStarted", recordingStarted);
+  startButtonPressed = 1;
   showTimer = false;
   recognition.stop();
   console.log("Speech recognition stopped by user.");
@@ -351,6 +420,7 @@ function setupSpeechRecognition() {
   recognition.onend = () => {
     console.log("Recognition ended");
     getImage(finalTranscript + interimTranscript);
+    startTimer = false;
   };
 }
 
@@ -394,4 +464,3 @@ async function getImage(transcript) {
     console.error("Error:", error.message);
   }
 }
-
