@@ -9,6 +9,8 @@ let Karrik;
 let VG5000;
 let DINMittelschriftStd;
 let DINEngschriftStd;
+let Compacta;
+let Eurostile;
 let showTimer = false;
 let startTimer = false;
 let recordingStartTime = 0;
@@ -22,7 +24,7 @@ let whiteButtonStartRecording = false;
 let recordingStarted = false; // Flag variable to track if recording has started
 let sceneSwitchedTo2 = false;
 let redButtonPressCount = 0;
-const imageSize = 800;
+const imageSize = 1000;
 
 
 //add music (with preLoad??) (brown noise)
@@ -35,6 +37,8 @@ const imageSize = 800;
 function preload() {
   Karrik = loadFont('fonts/Karrik.ttf');
   VG5000 = loadFont('fonts/VG5000.ttf');
+  Compacta = loadFont('fonts/Compacta.ttf')
+  Eurostile = loadFont('fonts/eurostile.ttf')
   DINMittelschriftStd = loadFont('fonts/DINMittelschriftStd.otf');
   DINEngschriftStd = loadFont('fonts/DINEngschriftStd.otf');
 }
@@ -50,7 +54,7 @@ function setup() {
 
   serial = new p5.SerialPort();
   serial.list();
-  serial.open("/dev/tty.usbmodem141301");
+  serial.open("/dev/tty.usbmodem1413301");
   serial.on('connected', serverConnected);
   serial.on('list', gotList);
   serial.on('data', gotData);
@@ -60,7 +64,7 @@ function setup() {
 
 
   createCanvas(1920, 1080);
-  textFont('DINMittelschriftStd');
+  textFont('Compacta');
   const click_to_record = select('#click_to_record');
   const stop_recording = select('#stop_recording');
 
@@ -75,14 +79,15 @@ function setup() {
   stop_recording.mousePressed(stopAndResetRecording);
 
   // Create the button in scene 1
-  //button = createButton('Click me');
-  //button.position(width / 2, height / 2 + 100);
-  //button.mousePressed(switchToScene2); 
+  button = createButton('Click me');
+  button.position(width / 2, height / 2 + 100);
+  button.mousePressed(switchToScene2); 
+
 
 }
 
 function draw() {
-  background(240); 
+  background(255); 
 
 
   if (scene === 1) {
@@ -191,29 +196,34 @@ function gotRawData(thedata) {
 function drawTimer() {
   let currentTime = int((millis() - recordingStartTime) / 1000);
   let remainingTime = max(30 - currentTime, 0); 
-  textSize(30);
+  textSize(40);
   fill(0);
   textAlign(LEFT);
   textWrap(WORD);
-  text("TIME: " + remainingTime, width / 2 + 800, 300, 200);
+  text("00:" + remainingTime, width / 2 + 800, 300, 200);
   startTimer = false;
 }
 
 function drawStartTimer() {
-  textSize(30);
+  textSize(40);
+  textAlign(LEFT);
+  textWrap(WORD);
   fill(0);
-  text("TIME: 30", width / 2 + 800, 300, 200);
+  text("00:30", width / 2 + 800, 300, 200);
 }
 
 
 function drawScene1() {
   fill(0);
-  textSize(60);
+  textSize(140);
   textAlign(CENTER);
-  text("Press the white button to start", width / 2, height / 2);
+  text("PRESS THE WHITE BUTTON TO START", width / 2, height / 2);
   textSize(30)
   fill(75);
-  text("* Ensure both you and your partner are wearing the noise-cancelling headphones *", width / 2, height / 2 + 60)
+  push();
+  textFont('Eurostile');
+  text("Playable by up to 4 people", width / 2, height / 2 + 60)
+  pop();
   select('#click_to_record').hide();
   select('#stop_recording').hide();
   select('#convert_text').hide();
@@ -232,17 +242,19 @@ function drawScene2() {
   let scaleFactor = min(imageSize / originalImage.width, imageSize / originalImage.height);
   let scaledWidth = originalImage.width * scaleFactor;
   let scaledHeight = originalImage.height * scaleFactor;
-  image(originalImage, 40, (height - scaledHeight) / 2, scaledWidth, scaledHeight);
+  image(originalImage, 40, (height - scaledHeight) / 2 + 100, scaledWidth, scaledHeight);
   fill(0);
-  textSize(60);
+  textSize(100);
   textAlign(CENTER);
-  text("Describe this image with as much detail as possible", width / 2, 80);
+  text("DESCRIBE THIS IMAGE WITH AS MUCH DETAIL AS POSSIBLE", width / 2, 120);
   textAlign(CENTER);
   textWrap(WORD);
   fill(75);
   textSize(40);
-  text("Press the white button when you are ready to speak your response into the microphone ⚪", width/12, 110,  5 * width / 6, width/2);
-  text("Press the red button to stop recording 🔴", width/12, 150,  5 * width / 6, width/2);
+  push();
+  textFont('Eurostile');
+  text("Press the white button when you are ready to speak your response into the microphone.", width/12, 150,  5 * width / 6, width/2);
+  text("Press the red button to stop recording.", width/12, 190,  5 * width / 6, width/2);
   select('#click_to_record').show();
   select('#stop_recording').show();
   select('#convert_text').show();
@@ -251,8 +263,9 @@ function drawScene2() {
   textAlign(LEFT);
   textWrap(WORD);
   textSize(30);
-  text(finalTranscript + interimTranscript, width/2, 300, 800);
+  text(finalTranscript + interimTranscript, width/2 + 200, 500, 400);
   console.log('scene2')
+  pop();
 
   /*if (showTimer == false) {
     textSize(30);
@@ -271,7 +284,7 @@ function drawScene3() {
     let scaledWidth = currentGeneratedImage.width * scaleFactor;
     let scaledHeight = currentGeneratedImage.height * scaleFactor;
     let x = 40;
-    let y = height / 2 - scaledHeight / 2 + 80;
+    let y = height / 2 - scaledHeight / 2 + 100;
     imageMode(CORNER);
     image(currentGeneratedImage, x, y, scaledWidth, scaledHeight);
     textSize(40);
@@ -280,7 +293,10 @@ function drawScene3() {
   textWrap(WORD);
   fill(255);
   rectMode(CORNER);
-  text(finalTranscript, width/2, 200, 800);
+  push();
+  textFont('Eurostile');
+  text(finalTranscript, width/2 + 200, 500, 400);
+  pop();
   setTimeout(switchToScene4, 5000);
   console.log('scene3')
 }
@@ -292,22 +308,24 @@ function drawScene4() {
     let scaledWidth = currentGeneratedImage.width * scaleFactor;
     let scaledHeight = currentGeneratedImage.height * scaleFactor;
     let x = 40;
-    let y = height / 2 - scaledHeight / 2 + 80;
+    let y = height / 2 - scaledHeight / 2 + 100;
     image(currentGeneratedImage, x, y, scaledWidth, scaledHeight);
     fill(0);
-    textSize(60);
+    textSize(100);
     textAlign(CENTER);
-    text("Describe this image with as much detail as possible", width / 2, 80);
+    text("DESCRIBE THIS IMAGE WITH AS MUCH DETAIL AS POSSIBLE", width / 2, 120);
     textAlign(CENTER);
     textWrap(WORD);
-    fill(75);
     textSize(40);
-    text("Press the white button when you are ready to speak your response into the microphone ⚪", width/12, 110,  5 * width / 6, width/2);
-    text("Press the red button to stop recording 🔴", width/12, 160,  5 * width / 6, width/2);
+    push();
+    textFont('Eurostile');
+    text("Press the white button when you are ready to speak your response into the microphone.", width/12, 150,  5 * width / 6, width/2);
+    text("Press the red button to stop recording.", width/12, 190,  5 * width / 6, width/2);
     textAlign(LEFT);
     textWrap(WORD);
     textSize(30);
-    text(finalTranscript + interimTranscript, width/2, 300, 800);
+    text(finalTranscript + interimTranscript, width/2 + 200, 500, 400);
+    pop();
     console.log('scene4', redButtonPressCount);
     if (numGeneratedImages == 4) {
     switchToScene5();
@@ -320,18 +338,18 @@ function drawScene5() {
   startTimer = false;
   showTimer = false;
   let xOffset = width/4 + 380;
-  textSize(30);
+  textSize(50);
   rectMode(CENTER);
   textAlign(CENTER);
-  text("Original Image", 450, height/4, 300);
+  text("ORIGINAL IMAGE", 450, height/4, 300);
   let yOffset = 40;
   let imageWidth = 500;
   let imageHeight = 500;
-  //let scaleFactor = 0.6;
+  let scaleFactor = 0.3;
   //let scaledWidth = originalImage.width * scaleFactor;
   //let scaledHeight = originalImage.height * scaleFactor;
   imageMode(CORNER);
-  let scaleFactor = min(imageSize / originalImage.width, imageSize / originalImage.height);
+  //let scaleFactor = min(imageSize / originalImage.width, imageSize / originalImage.height);
   let scaledWidth = originalImage.width * scaleFactor;
   let scaledHeight = originalImage.height * scaleFactor;
   image(originalImage, 40, (height - scaledHeight) / 2 + 30, scaledWidth, scaledHeight);
@@ -349,8 +367,6 @@ function drawScene5() {
     scene = 1;
   }, 30000); 
 }
-
-
  /*if ((i + 1) % 2 === 0) {
       xOffset = 40;
       yOffset += imageHeight + 20;
@@ -358,6 +374,7 @@ function drawScene5() {
 
 
 function switchToScene2() {
+  button.hide();
   scene = 2; 
 }
 

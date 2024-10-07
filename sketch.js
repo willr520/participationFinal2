@@ -10,6 +10,7 @@ let scene = 1;
 let button;
 let Karrik;
 let VG5000;
+let Compacta;
 let showTimer = false;
 let generatedImageCount = 0;
 
@@ -18,12 +19,13 @@ let generatedImageCount = 0;
 function preload() {
   Karrik = loadFont('Karrik.ttf');
   VG5000 = loadFont('VG5000.ttf');
+  Compacta = loadFont('Compacta.ttf');
   originalImage = loadImage('images/originalImage.jpeg');
 }
 
 function setup() {
   createCanvas(1920, 1080);
-  textFont(VG5000);
+  textFont(Compacta);
   //const click_to_record = select('#click_to_record');
   //const stop_recording = select('#stop_recording');
 
