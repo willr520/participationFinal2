@@ -56,8 +56,9 @@ function draw() {
     drawScene3();
   } else if (scene === 4) {
     drawScene4();
+  } else if (scene === 5) {
+    drawLoadingScene(); // Loading scene
   }
-
 
   if (showTimer) {
     drawTimer();
@@ -145,6 +146,29 @@ function drawScene4() {
   //give instructions on what button to press, timer in the upper right corner that is static at 30 seconds but starts counting down when button pressed
 }
 
+function drawLoadingScene() {
+  background(220);
+  textAlign(CENTER);
+  textSize(60);
+  text("LOADING", width/2, height/2);
+  
+  push ();
+    translate (width/2, height/2 + 80);
+    rotate (frameCount * 3);
+    noFill ();
+    strokeWeight (20);
+    stroke ("white");
+    //ellipse (0, 0, 100, 100);
+  
+    noFill ();
+
+    stroke ("black");
+    strokeWeight (20);
+    arc (0, 0, 100, 100, 0, 90);
+  pop ();
+  console.log('loadingScene');
+}
+
 //draw scene 5
 
 //scene 4 - have to call the generated image again ?? then reset the transcript (basically repeat scene 2 and 3)
@@ -162,6 +186,11 @@ function switchToScene4() {
   scene = 4;
   resetTranscription();
 }
+
+function switchToLoadingScene() {
+  scene = 5; // Assuming scene 5 is the loading scene
+}
+
 
 
 function startRecording() {
@@ -210,12 +239,12 @@ function setupSpeechRecognition() {
     }
 
   };
-  setTimeout(() => {
   recognition.onend = () => {
     console.log("Recognition ended");
+    switchToLoadingScene();  // Switch to the loading scene when recognition ends
+    getImage(finalTranscript);  // Immediately fetch the image using the final transcript
   };
-  getImage(finalTranscript);
-}, 30000)
+  
 }
 
 async function getImage(transcript) {
@@ -242,6 +271,8 @@ async function getImage(transcript) {
       // Load the generated image
       loadImage(URL.createObjectURL(response.data), img => {
         currentGeneratedImage = img;
+
+        // Switch to scene 3 to display the generated image
         scene = 3;
       });
     } else {

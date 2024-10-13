@@ -24,7 +24,7 @@ let whiteButtonStartRecording = false;
 let recordingStarted = false; // Flag variable to track if recording has started
 let sceneSwitchedTo2 = false;
 let redButtonPressCount = 0;
-const imageSize = 1000;
+const imageSize = 700;
 
 
 //add music (with preLoad??) (brown noise)
@@ -83,6 +83,8 @@ function setup() {
   button.position(width / 2, height / 2 + 100);
   button.mousePressed(switchToScene2); 
 
+  angleMode (DEGREES);
+  strokeCap(SQUARE);  // Set stroke cap 
 
 }
 
@@ -100,6 +102,8 @@ function draw() {
     drawScene4();
   } else if (scene === 5) {
     drawScene5();
+  } else if (scene === 'loading') {
+    drawLoadingScreen();
   }
 
   if (showTimer) {
@@ -290,6 +294,8 @@ function drawScene3() {
     textSize(40);
     textAlign(CENTER);
   }
+  textAlign(CENTER);
+  text("YOUR DESCRIPTION", width/2 + 200, 400, 400);
   textWrap(WORD);
   fill(255);
   rectMode(CORNER);
@@ -337,35 +343,66 @@ function drawScene5() {
   // Display all four generated images
   startTimer = false;
   showTimer = false;
-  let xOffset = width/4 + 380;
-  textSize(50);
-  rectMode(CENTER);
-  textAlign(CENTER);
-  text("ORIGINAL IMAGE", 450, height/4, 300);
+  let xOffset = width / 4 + 380;
   let yOffset = 40;
+  
+
+  // Define the max width constraint
+//let maxImageWidth = width / 2; // Ensures the image won't go past half the screen width
+
   let imageWidth = 500;
   let imageHeight = 500;
-  let scaleFactor = 0.3;
-  //let scaledWidth = originalImage.width * scaleFactor;
-  //let scaledHeight = originalImage.height * scaleFactor;
-  imageMode(CORNER);
-  //let scaleFactor = min(imageSize / originalImage.width, imageSize / originalImage.height);
+
+  // Calculate the scale factor while ensuring the image fits within the max width
+  let scaleFactor = min(imageSize / originalImage.width, imageSize / originalImage.height);
   let scaledWidth = originalImage.width * scaleFactor;
   let scaledHeight = originalImage.height * scaleFactor;
-  image(originalImage, 40, (height - scaledHeight) / 2 + 30, scaledWidth, scaledHeight);
-  //these are the four images that are generated (include the original image)
+
+  imageMode(CORNER);
+  image(originalImage, 40, (height - scaledHeight) / 2 + 100, scaledWidth, scaledHeight);
+  textSize(50);
+  textAlign(CENTER); // Center the text horizontally
+  text("ORIGINAL IMAGE", 40 + scaledWidth / 2, height / 4); // Center text based on image position
+
+  // Display generated images
   for (let i = 0; i < generatedImages.length; i++) {
     imageMode(CORNER);
     image(generatedImages[i], xOffset, yOffset, imageWidth, imageHeight);
     xOffset += imageWidth + 10;
     if ((i + 1) % 2 === 0) {
-      xOffset = width/4 + 380;
+      xOffset = width / 4 + 380;
       yOffset += imageHeight + 10;
     }
   }
+
   setTimeout(() => {
     scene = 1;
-  }, 30000); 
+  }, 30000);
+}
+
+
+
+
+function drawLoadingScreen(){
+  textAlign(CENTER);
+  textSize(60);
+  text("LOADING", width/2, height/2);
+  
+  push ();
+    translate (width/2, height/2 + 80);
+    rotate (frameCount * 3);
+    noFill ();
+    strokeWeight (20);
+    stroke ("white");
+    //ellipse (0, 0, 100, 100);
+  
+    noFill ();
+
+    stroke ("black");
+    strokeWeight (20);
+    arc (0, 0, 100, 100, 0, 90);
+  pop ();
+  
 }
  /*if ((i + 1) % 2 === 0) {
       xOffset = 40;
@@ -436,6 +473,7 @@ function setupSpeechRecognition() {
 
   recognition.onend = () => {
     console.log("Recognition ended");
+    scene = 'loading';
     getImage(finalTranscript + interimTranscript);
     startTimer = false;
   };
