@@ -279,6 +279,8 @@ function drawScene2() {
 
 }
 
+let imageSaved = false;
+
 function drawScene3() {
   startTimer = false;
   background(69, 69, 69);
@@ -303,11 +305,19 @@ function drawScene3() {
   textFont('Eurostile');
   text(finalTranscript, width/2 + 200, 500, 400);
   pop();
+
+  if (!imageSaved) {
+    currentGeneratedImage.save();
+    imageSaved = true;
+
+  }
+
   setTimeout(switchToScene4, 5000);
   console.log('scene3')
 }
 
 function drawScene4() {
+  imageSaved = false;
   startTimer = true;
     imageMode(CORNER);
     let scaleFactor = 0.5;
@@ -483,6 +493,8 @@ function resetTranscription() {
   finalTranscript = ''; 
 }
 
+let savedDescriptions = [];  // Array to store descriptions
+
 async function getImage(transcript) {
   const formData = new FormData();
   formData.append('prompt', transcript);
@@ -504,12 +516,15 @@ async function getImage(transcript) {
     if (response.status === 200) {
       console.log("Image saved successfully.");
 
-
       loadImage(URL.createObjectURL(response.data), img => {
         currentGeneratedImage = img;
         numGeneratedImages++;
         generatedImages.push(currentGeneratedImage);
         console.log(numGeneratedImages);
+
+        // Save the transcription as a .txt file
+        savedDescriptions.push(transcript);  // Append the description
+        saveTextFile(transcript);  // Call the function to save the transcript
         scene = 3;
       });
     } else {
@@ -518,4 +533,9 @@ async function getImage(transcript) {
   } catch (error) {
     console.error("Error:", error.message);
   }
+}
+
+function saveTextFile(transcript) {
+  let fileName = `description_${numGeneratedImages}.txt`; // Name the file uniquely based on the image number
+  saveStrings([transcript], fileName);  // Save the transcript as a .txt file
 }
